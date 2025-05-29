@@ -7,13 +7,12 @@ import Symbolics: wrap, Term, Struct, BasicSymbolic, Symbolic
 import Base: +, -, *, /, \, ^
 import Base: >, >=, <, <=, ==
 
-export ConcreteModel, PyomoSet, Var, Param, SolverFactory, Objective, maximize, minimize, PyomoVar, TransformationFactory
+export SymbolicConcreteModel, ConcreteModel, SolverFactory, TransformationFactory
 export ForwardEuler, BackwardEuler, MidpointEuler, LagrangeRadau, LagrangeLegendre
 export PyomoVar
 export pyomo, dae, opt
 
 include("concretemodel.jl")
-include("dae.jl")
 include("symbolics.jl")
 include("solver.jl")
 
