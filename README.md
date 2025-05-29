@@ -1,7 +1,7 @@
 # Pyomo.jl
 
 This package is an interface to Pyomo, a Python package for nonlinear optimization
-and solving DAEs. More information is available at the [Pyomo docs].
+and solving DAEs. More information is available at the [Pyomo docs](https://pyomo.readthedocs.io/en/stable/).
 
 In particular, the purpose of this package is to interface Pyomo with Symbolics.jl. In this way, Symbolics can be used to build Pyomo expressions that can then be
 turned into Julia functions using `Symbolics.build_function`, and then to Python
