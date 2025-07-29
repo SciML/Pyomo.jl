@@ -24,12 +24,13 @@ const opt = PythonCall.pynew()
 const math = PythonCall.pynew()
 const compare_expressions = PythonCall.pynew()
 
-function __init__() 
+function __init__()
     PythonCall.pycopy!(pyomo, pyimport("pyomo.environ"))
     PythonCall.pycopy!(dae, pyimport("pyomo.dae"))
     PythonCall.pycopy!(opt, pyimport("pyomo.opt"))
     PythonCall.pycopy!(math, pyimport("math"))
-    PythonCall.pycopy!(compare_expressions, pyimport("pyomo.core.expr.compare" => "compare_expressions"))
+    PythonCall.pycopy!(
+        compare_expressions, pyimport("pyomo.core.expr.compare" => "compare_expressions"))
 end
 
 end # module Pyomo
