@@ -23,9 +23,13 @@ function TransformationFactory(m::DiscretizationMethod)
     pyomo.TransformationFactory(method_string(m))
 end
 
-is_finite_difference(dm::DiscretizationMethod) = dm isa Union{ForwardEuler, BackwardEuler, MidpointEuler}
+function is_finite_difference(dm::DiscretizationMethod)
+    dm isa Union{ForwardEuler, BackwardEuler, MidpointEuler}
+end
 
-method_string(dm::DiscretizationMethod) = is_finite_difference(dm) ? "dae.finite_difference" : "dae.collocation"
+function method_string(dm::DiscretizationMethod)
+    is_finite_difference(dm) ? "dae.finite_difference" : "dae.collocation"
+end
 scheme_string(::ForwardEuler) = "FORWARD"
 scheme_string(::MidpointEuler) = "CENTRAL"
 scheme_string(::BackwardEuler) = "BACKWARD"

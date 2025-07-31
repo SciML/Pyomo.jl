@@ -25,22 +25,24 @@ pyomo_getindex(v::Py, args...) = v[args...]
 SymbolicUtils.promote_symtype(::typeof(pyomo_getindex), X, ii...) = PyomoVar
 
 -(x::C) where {C <: PyomoVar} = C(x.x.__neg__())
-+(x::C, y::Real) where {C<:PyomoVar} = C(pyadd(Py(x), y))
-*(x::C, y::Real) where {C<:PyomoVar} = C(pymul(Py(x), y))
--(x::C, y::Real) where {C<:PyomoVar} = C(pysub(Py(x), y))
-/(x::C, y::Real) where {C<:PyomoVar} = C(pydiv(Py(x), y))
-^(x::C, y::Real) where {C<:PyomoVar} = C(pypow(Py(x), y))
-^(x::C, y::Integer) where {C<:PyomoVar} = C(pypow(Py(x), y))
++(x::C, y::Real) where {C <: PyomoVar} = C(pyadd(Py(x), y))
+*(x::C, y::Real) where {C <: PyomoVar} = C(pymul(Py(x), y))
+-(x::C, y::Real) where {C <: PyomoVar} = C(pysub(Py(x), y))
+/(x::C, y::Real) where {C <: PyomoVar} = C(pydiv(Py(x), y))
+^(x::C, y::Real) where {C <: PyomoVar} = C(pypow(Py(x), y))
+^(x::C, y::Integer) where {C <: PyomoVar} = C(pypow(Py(x), y))
 
 _float_if_irrational(x::Real) = x isa Irrational ? float(x) : x
 
->=(x::C, y::C) where {C<:PyomoVar} = C(pycall(≥, x, _float_if_irrational(y)))
->(x::C, y::C) where {C<:PyomoVar} = C(pycall(>, x, _float_if_irrational(y)))
-<=(x::C, y::C) where {C<:PyomoVar} = C(pycall(≤, x, _float_if_irrational(y)))
-<(x::C, y::C) where {C<:PyomoVar} = C(pycall(<, x, _float_if_irrational(y)))
-==(x::C, y::C) where {C<:PyomoVar} = C(pycall(==, x, _float_if_irrational(y)))
+>=(x::C, y::C) where {C <: PyomoVar} = C(pycall(≥, x, _float_if_irrational(y)))
+>(x::C, y::C) where {C <: PyomoVar} = C(pycall(>, x, _float_if_irrational(y)))
+<=(x::C, y::C) where {C <: PyomoVar} = C(pycall(≤, x, _float_if_irrational(y)))
+<(x::C, y::C) where {C <: PyomoVar} = C(pycall(<, x, _float_if_irrational(y)))
+==(x::C, y::C) where {C <: PyomoVar} = C(pycall(==, x, _float_if_irrational(y)))
 
-Base.isequal(x::C, y::Number) where {C <: PyomoVar} = pyconvert(Bool, pycall(Pyomo.compare_expressions, x, y))
+function Base.isequal(x::C, y::Number) where {C <: PyomoVar}
+    pyconvert(Bool, pycall(Pyomo.compare_expressions, x, y))
+end
 Base.iszero(x::C) where {C <: PyomoVar} = false
 Base.isone(x::C) where {C <: PyomoVar} = false
 Base.isfinite(x::C) where {C <: PyomoVar} = true
