@@ -1,7 +1,7 @@
 name = "Pyomo"
 uuid = "0e8e1daf-01b5-4eba-a626-3897743a3816"
 authors = ["vyudu <vincent.duyuan@gmail.com>"]
-version = "0.1.0"
+version = "1.0.0"
 
 [deps]
 NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
