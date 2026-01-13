@@ -29,7 +29,7 @@ function __init__()
     PythonCall.pycopy!(dae, pyimport("pyomo.dae"))
     PythonCall.pycopy!(opt, pyimport("pyomo.opt"))
     PythonCall.pycopy!(math, pyimport("math"))
-    PythonCall.pycopy!(compare_expressions, pyimport("pyomo.core.expr.compare" => "compare_expressions"))
+    return PythonCall.pycopy!(compare_expressions, pyimport("pyomo.core.expr.compare" => "compare_expressions"))
 end
 
 end # module Pyomo

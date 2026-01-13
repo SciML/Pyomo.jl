@@ -12,7 +12,7 @@ Base.promote_rule(::Type{PyomoVar}, ::Type{S}) where {S <: Number} = PyomoVar
 # Symbolic indexing
 Base.getindex(v::PyomoVar, i::Vararg{Integer}) = pyomo_getindex(v, i...)
 function Base.getindex(v::Union{PyomoVar, BasicSymbolic{Struct{PyomoVar}}}, args...)
-    if v isa BasicSymbolic || any(t -> t <: Union{Num, Symbolic}, typeof(args).types)
+    return if v isa BasicSymbolic || any(t -> t <: Union{Num, Symbolic}, typeof(args).types)
         wrap(Term{PyomoVar}(pyomo_getindex, [v, args...]))
     else
         pyomo_getindex(v, args...)
@@ -41,7 +41,7 @@ _float_if_irrational(x::Real) = x isa Irrational ? float(x) : x
 ==(x::C, y::C) where {C <: PyomoVar} = C(pycall(==, x, _float_if_irrational(y)))
 
 function Base.isequal(x::C, y::Number) where {C <: PyomoVar}
-    pyconvert(Bool, pycall(Pyomo.compare_expressions, x, y))
+    return pyconvert(Bool, pycall(Pyomo.compare_expressions, x, y))
 end
 Base.iszero(x::C) where {C <: PyomoVar} = false
 Base.isone(x::C) where {C <: PyomoVar} = false
