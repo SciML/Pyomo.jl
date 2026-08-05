@@ -49,6 +49,14 @@ end
     @test same_expr(PyomoVar(m.U)[1, 0.5], m.U[1, 0.5])
     # All-integer indices are the case that collides with `getindex(::Number, ::Integer...)`
     @test same_expr(PyomoVar(m.U)[1, 0], m.U[1, 0])
+
+    # SymbolicUtils queries these before choosing simplification paths; a PyomoVar wraps
+    # an opaque Pyomo expression, so nothing is known about its value
+    pv = PyomoVar(m.U[1, 0])
+    @test !isinteger(pv)
+    @test !iszero(pv)
+    @test !isone(pv)
+    @test isfinite(pv)
 end
 
 @testset "Registered Pyomo math functions" begin

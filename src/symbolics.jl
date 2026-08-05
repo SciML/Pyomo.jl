@@ -80,6 +80,9 @@ end
 Base.iszero(x::C) where {C <: PyomoVar} = false
 Base.isone(x::C) where {C <: PyomoVar} = false
 Base.isfinite(x::C) where {C <: PyomoVar} = true
+# A PyomoVar wraps an opaque Pyomo expression, so nothing about its value is known;
+# SymbolicUtils asks this before taking integer-specific simplification paths.
+Base.isinteger(x::C) where {C <: PyomoVar} = false
 SymbolicUtils.isnegative(x::C) where {C <: PyomoVar} = false
 
 for ff in [acos, acosh, asin, tan, atanh, cos, log, sin, log10, sqrt, exp]
