@@ -2,7 +2,10 @@ mutable struct ConcreteModel
     __py__::Py
 end
 
-const SymbolicConcreteModel = Symbolics.symstruct(ConcreteModel)
+# Symbolics 7 uses the Julia type directly as the symtype, so a symbolic model is just
+# `@variables m::ConcreteModel`. Kept as an alias so `@variables m::SymbolicConcreteModel`
+# still reads the way it did under the Symbolics 6 `symstruct` wrapper.
+const SymbolicConcreteModel = ConcreteModel
 
 function ConcreteModel()
     return ConcreteModel(pyomo.ConcreteModel())

@@ -9,20 +9,44 @@ Base.hash(C::PyomoVar, x::UInt) = hash(pystr(C.x), x)
 Base.convert(T::Type{PyomoVar}, x::Number) = T(Py(x))
 Base.promote_rule(::Type{PyomoVar}, ::Type{S}) where {S <: Number} = PyomoVar
 
-# Symbolic indexing
-Base.getindex(v::PyomoVar, i::Vararg{Integer}) = pyomo_getindex(v, i...)
-function Base.getindex(v::Union{PyomoVar, BasicSymbolic{Struct{PyomoVar}}}, args...)
-    return if v isa BasicSymbolic || any(t -> t <: Union{Num, Symbolic}, typeof(args).types)
-        wrap(Term{PyomoVar}(pyomo_getindex, [v, args...]))
+const MaybeSymbolic = Union{Num, SymbolicT}
+
+"""
+    pyomo_getindex(v, args...)
+
+Index into the Pyomo object `v`, which may be a [`PyomoVar`](@ref), a raw `Py`, or a
+symbolic value of symtype `PyomoVar`. Unlike `getindex`, arbitrary index values (strings,
+floats, symbolic values) are allowed, matching Pyomo's indexing. If `v` or any index is
+symbolic the access is deferred into the expression tree and a symbolic value of symtype
+`PyomoVar` is returned.
+"""
+function pyomo_getindex(v::Union{PyomoVar, Py, MaybeSymbolic}, args...)
+    return if v isa MaybeSymbolic || any(a -> a isa MaybeSymbolic, args)
+        wrap(SymbolicUtils.term(pyomo_getindex, unwrap(v), unwrap.(args)...; type = PyomoVar))
+    elseif v isa PyomoVar
+        v.x[args...]
     else
-        pyomo_getindex(v, args...)
+        v[args...]
     end
 end
-
-# Special get index method that supports arbitrary indices (strings, floats, etc.), as in pyomo
-pyomo_getindex(v::PyomoVar, args...) = v.x[args...]
-pyomo_getindex(v::Py, args...) = v[args...]
 SymbolicUtils.promote_symtype(::typeof(pyomo_getindex), X, ii...) = PyomoVar
+
+Base.getindex(v::PyomoVar, i, args...) = pyomo_getindex(v, i, args...)
+
+_getproperty(s, ::Val{name}) where {name} = getproperty(s, name)
+SymbolicUtils.promote_symtype(::typeof(_getproperty), M, N) = PyomoVar
+
+"""
+    pysym_getproperty(s, name::Symbol)
+
+Symbolic property access on a symbolic [`ConcreteModel`](@ref) `s`, e.g. the `U` in
+`m.U[i, t]`. Pyomo components live on the underlying Python object rather than being Julia
+fields, so the access cannot go through Symbolics' struct support and is instead deferred
+into the expression tree as a value of symtype [`PyomoVar`](@ref).
+"""
+function pysym_getproperty(s::MaybeSymbolic, name::Symbol)
+    return wrap(SymbolicUtils.term(_getproperty, unwrap(s), Val{name}(); type = PyomoVar))
+end
 
 -(x::C) where {C <: PyomoVar} = C(x.x.__neg__())
 +(x::C, y::Real) where {C <: PyomoVar} = C(pyadd(Py(x), y))
@@ -54,14 +78,14 @@ for ff in [acos, acosh, asin, tan, atanh, cos, log, sin, log10, sqrt, exp]
     py_f = Symbol(:py_, f)
     @eval $py_f(x) = pyomo.$f(x)
 end
-@register_symbolic py_acos(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_acosh(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_asin(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_tan(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_atanh(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_cos(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_log(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_sin(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_sqrt(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_exp(x::Symbolics.Struct{PyomoVar})
-@register_symbolic py_log10(x::Symbolics.Struct{PyomoVar})
+@register_symbolic py_acos(x::PyomoVar)
+@register_symbolic py_acosh(x::PyomoVar)
+@register_symbolic py_asin(x::PyomoVar)
+@register_symbolic py_tan(x::PyomoVar)
+@register_symbolic py_atanh(x::PyomoVar)
+@register_symbolic py_cos(x::PyomoVar)
+@register_symbolic py_log(x::PyomoVar)
+@register_symbolic py_sin(x::PyomoVar)
+@register_symbolic py_sqrt(x::PyomoVar)
+@register_symbolic py_exp(x::PyomoVar)
+@register_symbolic py_log10(x::PyomoVar)

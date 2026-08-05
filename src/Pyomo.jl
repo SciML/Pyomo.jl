@@ -2,14 +2,15 @@ module Pyomo
 
 using PythonCall
 using Symbolics, NaNMath
-import Symbolics: wrap, Term, Struct, BasicSymbolic, Symbolic
+import SymbolicUtils
+import Symbolics: wrap, unwrap, SymbolicT
 
 import Base: +, -, *, /, \, ^
 import Base: >, >=, <, <=, ==
 
 export SymbolicConcreteModel, ConcreteModel, SolverFactory, TransformationFactory
 export ForwardEuler, BackwardEuler, MidpointEuler, LagrangeRadau, LagrangeLegendre
-export PyomoVar
+export PyomoVar, pyomo_getindex, pysym_getproperty
 export pyomo, dae, opt
 
 include("concretemodel.jl")
