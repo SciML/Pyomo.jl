@@ -1,6 +1,7 @@
 using Pyomo
 using Symbolics
-using PythonCall: pyconvert
+using PythonCall: pyconvert, Py
+import NaNMath
 using Test
 
 # Pyomo `==` on expressions builds a relational expression rather than a `Bool`, so
@@ -28,6 +29,11 @@ end
     x = pyomo_getindex(U, 1, T_SYM)
     @test Symbolics.symtype(Symbolics.unwrap(x)) === PyomoVar
 
+    # Symbolic Pyomo values are scalars: without a `promote_shape` method their shape is
+    # `Unknown(-1)` and every scalar operation rejects them.
+    @test Symbolics.symtype(Symbolics.unwrap(cos(x))) === Real
+    @test Symbolics.symtype(Symbolics.unwrap(U + 1)) === PyomoVar
+
     # The generated function must reproduce the Pyomo expression it stands for
     f = eval(Symbolics.build_function(Symbolics.unwrap(x - 1.0), MODEL_SYM, T_SYM))
     @test pyconvert(Float64, pyomo.value(Base.invokelatest(f, m, 0.5))) ≈ -1.0
@@ -44,6 +50,14 @@ end
     @test same_expr(PyomoVar(m.U)[1, 0.5], m.U[1, 0.5])
     # All-integer indices are the case that collides with `getindex(::Number, ::Integer...)`
     @test same_expr(PyomoVar(m.U)[1, 0], m.U[1, 0])
+
+    # SymbolicUtils queries these before choosing simplification paths; a PyomoVar wraps
+    # an opaque Pyomo expression, so nothing is known about its value
+    pv = PyomoVar(m.U[1, 0])
+    @test !isinteger(pv)
+    @test !iszero(pv)
+    @test !isone(pv)
+    @test isfinite(pv)
 end
 
 @testset "Registered Pyomo math functions" begin
@@ -67,5 +81,35 @@ end
         @test Symbolics.operation(expr) === pf
         f = eval(Symbolics.build_function(expr, MODEL_SYM, T_SYM))
         @test same_expr(Base.invokelatest(f, m, 0.5), pf(m.U[1, 0.5]))
+    end
+end
+
+@testset "PyomoVar arithmetic and comparisons" begin
+    m = ConcreteModel()
+    m.x = pyomo.Var(initialize = 1.0)
+    m.y = pyomo.Var(initialize = 2.0)
+    v = PyomoVar(m.x)
+    w = PyomoVar(m.y)
+
+    @test same_expr(Py(-v), -m.x)
+    @test same_expr(Py(v + 1.0), m.x + 1.0)
+    @test same_expr(Py(v - 1.0), m.x - 1.0)
+    @test same_expr(Py(v * 2.0), m.x * 2.0)
+    @test same_expr(Py(v / 2.0), m.x / 2.0)
+    @test same_expr(Py(v^2), m.x^2)
+    @test same_expr(Py(v^2.0), m.x^2.0)
+
+    # Comparisons must build Pyomo relational expressions, not Julia Bools
+    @test same_expr(Py(v >= w), m.x >= m.y)
+    @test same_expr(Py(v > w), m.x > m.y)
+    @test same_expr(Py(v <= w), m.x <= m.y)
+    @test same_expr(Py(v < w), m.x < m.y)
+    @test same_expr(Py(v == w), m.x == m.y)
+
+    @test isequal(v, v)
+    @test !isequal(v, 1.0)
+
+    for f in [NaNMath.sin, NaNMath.cos, NaNMath.sqrt, NaNMath.log, NaNMath.exp]
+        @test PyomoVar == typeof(f(v))
     end
 end
