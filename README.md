@@ -19,25 +19,31 @@ looks like.
 ```julia
 using Pyomo, Symbolics
 
-@variables t MODEL_SYM::SymbolicConcreteModel
-
-model.t = dae.ContinuousSet(bounds = (0, 1))
-model.x = pyomo.Var(model.t)
-model.y = pyomo.Var(model.t)
+model = ConcreteModel()
+model.t = dae.ContinuousSet(bounds = (0, 1), initialize = collect(range(0, 1, length = 11)))
+model.x = pyomo.Var(model.t, initialize = 1.0)
+model.y = pyomo.Var(model.t, initialize = 1.0)
 model.dx = dae.DerivativeVar(model.x, wrt = model.t)
-model.dy = dae.DerivativeVar(model.x, wrt = model.t)
+model.dy = dae.DerivativeVar(model.y, wrt = model.t)
 
-# Use symbolic indexing to build Pyomo expressions returned by the functions.
-# The type of variables in these equations is a Symbolic{PyomoVar}
-prey_eq = model.dx[t] ~ 1.5*model.x[t] - model.x[t]*model.y[t]
-predator_eq = model.dy[t] ~ -3*model.y[t] + model.x[t] * model.y[t]
+# A symbolic stand-in for the model, plus the symbolic time index.
+@variables MODEL_SYM::SymbolicConcreteModel t
 
-prey_f = eval(Symbolics.build_function(prey_eq, MODEL_SYM, t))
-pred_f = eval(Symbolics.build_function(pred_eq, MODEL_SYM, t))
+# Property access and indexing on the symbolic model are deferred into the expression
+# tree. The resulting symbolic values have symtype `PyomoVar`.
+msym(name) = pysym_getproperty(MODEL_SYM, name)
+x = pyomo_getindex(msym(:x), t)
+y = pyomo_getindex(msym(:y), t)
+dx = pyomo_getindex(msym(:dx), t)
+dy = pyomo_getindex(msym(:dy), t)
 
-model.deq1 = pyomo.Constraint(model.t, expr = Pyomo.pyfunc(prey_f))
-model.deq2 = pyomo.Constraint(model.t, expr = Pyomo.pyfunc(pred_f))
-...
+prey = eval(Symbolics.build_function(Symbolics.unwrap(dx - (1.5x - x * y)), MODEL_SYM, t))
+pred = eval(Symbolics.build_function(Symbolics.unwrap(dy - (-3y + x * y)), MODEL_SYM, t))
+
+model.deq1 = pyomo.Constraint(model.t, rule = Pyomo.pyfunc((m, tau) -> prey(m, tau) == 0))
+model.deq2 = pyomo.Constraint(model.t, rule = Pyomo.pyfunc((m, tau) -> pred(m, tau) == 0))
+
+model.deq1[0.5].expr  # -1.5*x[0.5] + x[0.5]*y[0.5] + dx[0.5]  ==  0
 ```
 
 ## Solvers
