@@ -32,6 +32,8 @@ end
 SymbolicUtils.promote_symtype(::typeof(pyomo_getindex), X, ii...) = PyomoVar
 
 Base.getindex(v::PyomoVar, i, args...) = pyomo_getindex(v, i, args...)
+# `PyomoVar <: Real`, so the all-integer case is ambiguous with `getindex(::Number, ::Integer...)`
+Base.getindex(v::PyomoVar, i::Integer, args::Vararg{Integer}) = pyomo_getindex(v, i, args...)
 
 _getproperty(s, ::Val{name}) where {name} = getproperty(s, name)
 SymbolicUtils.promote_symtype(::typeof(_getproperty), M, N) = PyomoVar

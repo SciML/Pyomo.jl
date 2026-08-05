@@ -42,6 +42,8 @@ end
 
     # Indexing a concrete PyomoVar goes straight through to Pyomo
     @test same_expr(PyomoVar(m.U)[1, 0.5], m.U[1, 0.5])
+    # All-integer indices are the case that collides with `getindex(::Number, ::Integer...)`
+    @test same_expr(PyomoVar(m.U)[1, 0], m.U[1, 0])
 end
 
 @testset "Registered Pyomo math functions" begin
