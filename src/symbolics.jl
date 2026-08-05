@@ -62,21 +62,24 @@ end
 +(x::C, y::Real) where {C <: PyomoVar} = C(pyadd(Py(x), y))
 *(x::C, y::Real) where {C <: PyomoVar} = C(pymul(Py(x), y))
 -(x::C, y::Real) where {C <: PyomoVar} = C(pysub(Py(x), y))
-/(x::C, y::Real) where {C <: PyomoVar} = C(pydiv(Py(x), y))
+/(x::C, y::Real) where {C <: PyomoVar} = C(pytruediv(Py(x), y))
 ^(x::C, y::Real) where {C <: PyomoVar} = C(pypow(Py(x), y))
 ^(x::C, y::Integer) where {C <: PyomoVar} = C(pypow(Py(x), y))
 
-_float_if_irrational(x::Real) = x isa Irrational ? float(x) : x
+# Comparisons build Pyomo relational expressions, so they go through Python's operators
+# rather than Julia's. The `Real` operand is promoted to a PyomoVar first via `convert`.
+>=(x::C, y::C) where {C <: PyomoVar} = C(pyge(Py(x), Py(y)))
+>(x::C, y::C) where {C <: PyomoVar} = C(pygt(Py(x), Py(y)))
+<=(x::C, y::C) where {C <: PyomoVar} = C(pyle(Py(x), Py(y)))
+<(x::C, y::C) where {C <: PyomoVar} = C(pylt(Py(x), Py(y)))
+==(x::C, y::C) where {C <: PyomoVar} = C(pyeq(Py(x), Py(y)))
 
->=(x::C, y::C) where {C <: PyomoVar} = C(pycall(≥, x, _float_if_irrational(y)))
->(x::C, y::C) where {C <: PyomoVar} = C(pycall(>, x, _float_if_irrational(y)))
-<=(x::C, y::C) where {C <: PyomoVar} = C(pycall(≤, x, _float_if_irrational(y)))
-<(x::C, y::C) where {C <: PyomoVar} = C(pycall(<, x, _float_if_irrational(y)))
-==(x::C, y::C) where {C <: PyomoVar} = C(pycall(==, x, _float_if_irrational(y)))
-
-function Base.isequal(x::C, y::Number) where {C <: PyomoVar}
-    return pyconvert(Bool, pycall(Pyomo.compare_expressions, x, y))
+function _compare_expressions(x::PyomoVar, y::Number)
+    return pyconvert(Bool, Pyomo.compare_expressions(Py(x), Py(y)))
 end
+Base.isequal(x::C, y::Number) where {C <: PyomoVar} = _compare_expressions(x, y)
+# Resolves ambiguity with `isequal(::Real, ::AbstractFloat)`
+Base.isequal(x::C, y::AbstractFloat) where {C <: PyomoVar} = _compare_expressions(x, y)
 Base.iszero(x::C) where {C <: PyomoVar} = false
 Base.isone(x::C) where {C <: PyomoVar} = false
 Base.isfinite(x::C) where {C <: PyomoVar} = true
@@ -87,7 +90,7 @@ SymbolicUtils.isnegative(x::C) where {C <: PyomoVar} = false
 
 for ff in [acos, acosh, asin, tan, atanh, cos, log, sin, log10, sqrt, exp]
     f = nameof(ff)
-    @eval NaNMath.$f(x::PyomoVar) = PyomoVar(pycall($f, x))
+    @eval NaNMath.$f(x::PyomoVar) = PyomoVar(pyomo.$f(Py(x)))
     py_f = Symbol(:py_, f)
     @eval $py_f(x) = pyomo.$f(x)
 end

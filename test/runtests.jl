@@ -1,6 +1,7 @@
 using Pyomo
 using Symbolics
-using PythonCall: pyconvert
+using PythonCall: pyconvert, Py
+import NaNMath
 using Test
 
 # Pyomo `==` on expressions builds a relational expression rather than a `Bool`, so
@@ -80,5 +81,35 @@ end
         @test Symbolics.operation(expr) === pf
         f = eval(Symbolics.build_function(expr, MODEL_SYM, T_SYM))
         @test same_expr(Base.invokelatest(f, m, 0.5), pf(m.U[1, 0.5]))
+    end
+end
+
+@testset "PyomoVar arithmetic and comparisons" begin
+    m = ConcreteModel()
+    m.x = pyomo.Var(initialize = 1.0)
+    m.y = pyomo.Var(initialize = 2.0)
+    v = PyomoVar(m.x)
+    w = PyomoVar(m.y)
+
+    @test same_expr(Py(-v), -m.x)
+    @test same_expr(Py(v + 1.0), m.x + 1.0)
+    @test same_expr(Py(v - 1.0), m.x - 1.0)
+    @test same_expr(Py(v * 2.0), m.x * 2.0)
+    @test same_expr(Py(v / 2.0), m.x / 2.0)
+    @test same_expr(Py(v^2), m.x^2)
+    @test same_expr(Py(v^2.0), m.x^2.0)
+
+    # Comparisons must build Pyomo relational expressions, not Julia Bools
+    @test same_expr(Py(v >= w), m.x >= m.y)
+    @test same_expr(Py(v > w), m.x > m.y)
+    @test same_expr(Py(v <= w), m.x <= m.y)
+    @test same_expr(Py(v < w), m.x < m.y)
+    @test same_expr(Py(v == w), m.x == m.y)
+
+    @test isequal(v, v)
+    @test !isequal(v, 1.0)
+
+    for f in [NaNMath.sin, NaNMath.cos, NaNMath.sqrt, NaNMath.log, NaNMath.exp]
+        @test PyomoVar == typeof(f(v))
     end
 end
