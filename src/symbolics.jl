@@ -11,6 +11,12 @@ Base.promote_rule(::Type{PyomoVar}, ::Type{S}) where {S <: Number} = PyomoVar
 
 const MaybeSymbolic = Union{Num, SymbolicT}
 
+# Shape counterpart of `promote_symtype`: with no method the term's shape falls back to
+# `Unknown(-1)`, and scalar operations then reject it ("Invalid shapes for cos"). Pyomo
+# values are always scalar here. `@register_symbolic` emits this for the `py_*` functions,
+# but terms built by hand need it spelled out.
+_scalar_shape() = SymbolicUtils.ShapeVecT()
+
 """
     pyomo_getindex(v, args...)
 
@@ -30,6 +36,7 @@ function pyomo_getindex(v::Union{PyomoVar, Py, MaybeSymbolic}, args...)
     end
 end
 SymbolicUtils.promote_symtype(::typeof(pyomo_getindex), X, ii...) = PyomoVar
+SymbolicUtils.promote_shape(::typeof(pyomo_getindex), shs::SymbolicUtils.ShapeT...) = _scalar_shape()
 
 Base.getindex(v::PyomoVar, i, args...) = pyomo_getindex(v, i, args...)
 # `PyomoVar <: Real`, so the all-integer case is ambiguous with `getindex(::Number, ::Integer...)`
@@ -37,6 +44,7 @@ Base.getindex(v::PyomoVar, i::Integer, args::Vararg{Integer}) = pyomo_getindex(v
 
 _getproperty(s, ::Val{name}) where {name} = getproperty(s, name)
 SymbolicUtils.promote_symtype(::typeof(_getproperty), M, N) = PyomoVar
+SymbolicUtils.promote_shape(::typeof(_getproperty), shs::SymbolicUtils.ShapeT...) = _scalar_shape()
 
 """
     pysym_getproperty(s, name::Symbol)

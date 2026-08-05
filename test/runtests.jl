@@ -28,6 +28,11 @@ end
     x = pyomo_getindex(U, 1, T_SYM)
     @test Symbolics.symtype(Symbolics.unwrap(x)) === PyomoVar
 
+    # Symbolic Pyomo values are scalars: without a `promote_shape` method their shape is
+    # `Unknown(-1)` and every scalar operation rejects them.
+    @test Symbolics.symtype(Symbolics.unwrap(cos(x))) === Real
+    @test Symbolics.symtype(Symbolics.unwrap(U + 1)) === PyomoVar
+
     # The generated function must reproduce the Pyomo expression it stands for
     f = eval(Symbolics.build_function(Symbolics.unwrap(x - 1.0), MODEL_SYM, T_SYM))
     @test pyconvert(Float64, pyomo.value(Base.invokelatest(f, m, 0.5))) ≈ -1.0
