@@ -36,7 +36,7 @@ function pyomo_getindex(v::Union{PyomoVar, Py, MaybeSymbolic}, args...)
     end
 end
 SymbolicUtils.promote_symtype(::typeof(pyomo_getindex), X, ii...) = PyomoVar
-SymbolicUtils.promote_shape(::typeof(pyomo_getindex), shs::SymbolicUtils.ShapeT...) = _scalar_shape()
+SymbolicUtils.promote_shape(::typeof(pyomo_getindex), shapes::SymbolicUtils.ShapeT...) = _scalar_shape()
 
 Base.getindex(v::PyomoVar, i, args...) = pyomo_getindex(v, i, args...)
 # `PyomoVar <: Real`, so the all-integer case is ambiguous with `getindex(::Number, ::Integer...)`
@@ -44,7 +44,7 @@ Base.getindex(v::PyomoVar, i::Integer, args::Vararg{Integer}) = pyomo_getindex(v
 
 _getproperty(s, ::Val{name}) where {name} = getproperty(s, name)
 SymbolicUtils.promote_symtype(::typeof(_getproperty), M, N) = PyomoVar
-SymbolicUtils.promote_shape(::typeof(_getproperty), shs::SymbolicUtils.ShapeT...) = _scalar_shape()
+SymbolicUtils.promote_shape(::typeof(_getproperty), shapes::SymbolicUtils.ShapeT...) = _scalar_shape()
 
 """
     pysym_getproperty(s, name::Symbol)
