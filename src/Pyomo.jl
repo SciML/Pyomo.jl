@@ -64,4 +64,6 @@ function __init__()
     return PythonCall.pycopy!(compare_expressions, pyimport("pyomo.core.expr.compare" => "compare_expressions"))
 end
 
+include("precompile.jl")
+
 end # module Pyomo
