@@ -1,7 +1,7 @@
 name = "Pyomo"
 uuid = "0e8e1daf-01b5-4eba-a626-3897743a3816"
 authors = ["vyudu <vincent.duyuan@gmail.com>"]
-version = "2.1.0"
+version = "2.2.0"
 
 [deps]
 DomainSets = "5b8099bc-c8ec-5219-889f-1d9e522a28bf"
