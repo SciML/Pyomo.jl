@@ -132,11 +132,11 @@ function pysym_getproperty(s::MaybeSymbolic, name::Symbol)
 end
 
 -(x::C) where {C <: PyomoVar} = C(x.x.__neg__())
-+(x::C, y::Real) where {C <: PyomoVar} = C(pyadd(Py(x), y))
-*(x::C, y::Real) where {C <: PyomoVar} = C(pymul(Py(x), y))
--(x::C, y::Real) where {C <: PyomoVar} = C(pysub(Py(x), y))
-/(x::C, y::Real) where {C <: PyomoVar} = C(pytruediv(Py(x), y))
-^(x::C, y::Real) where {C <: PyomoVar} = C(pypow(Py(x), y))
++(x::C, y::Number) where {C <: PyomoVar} = C(pyadd(Py(x), y))
+*(x::C, y::Number) where {C <: PyomoVar} = C(pymul(Py(x), y))
+-(x::C, y::Number) where {C <: PyomoVar} = C(pysub(Py(x), y))
+/(x::C, y::Number) where {C <: PyomoVar} = C(pytruediv(Py(x), y))
+^(x::C, y::Number) where {C <: PyomoVar} = C(pypow(Py(x), y))
 ^(x::C, y::Integer) where {C <: PyomoVar} = C(pypow(Py(x), y))
 ^(x::PyomoVar, y::Rational) = PyomoVar(pypow(Py(x), y))
 

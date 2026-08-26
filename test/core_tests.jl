@@ -118,6 +118,15 @@ end
     @test same_expr(Py(v / 2.0), m.x / 2.0)
     @test same_expr(Py(v^2), m.x^2)
     @test same_expr(Py(v^2.0), m.x^2.0)
+    @test same_expr(Py(v + w), m.x + m.y)
+    @test same_expr(Py(v - w), m.x - m.y)
+    @test same_expr(Py(v * w), m.x * m.y)
+    @test same_expr(Py(v / w), m.x / m.y)
+    @test same_expr(Py(v^w), m.x^m.y)
+    @test same_expr(Py(2.0 + v), 2.0 + m.x)
+    @test same_expr(Py(2.0 - v), 2.0 - m.x)
+    @test same_expr(Py(2.0 * v), 2.0 * m.x)
+    @test same_expr(Py(2.0 / v), 2.0 / m.x)
 
     # Comparisons must build Pyomo relational expressions, not Julia Bools
     @test same_expr(Py(v >= w), m.x >= m.y)
