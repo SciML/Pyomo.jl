@@ -20,7 +20,7 @@ PythonCall = "0.9.24"
 SafeTestsets = "0.1"
 SciMLTesting = "2.4"
 SymbolicUtils = "4.44"
-Symbolics = "7.32"
+Symbolics = "7.39.2"
 Test = "1"
 
 [extras]
